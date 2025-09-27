@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: showtime-service
+  namespace: cinema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: showtime-service
+  template:
+    metadata:
+      labels:
+        app: showtime-service
+    spec:
+      containers:
+        - name: showtime-service
+          image: showtime-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8086
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/cinema
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-secret
+                  key: POSTGRES_PASSWORD
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: showtime-service
+  namespace: cinema
+spec:
+  selector:
+    app: showtime-service
+  ports:
+    - port: 8086
+      targetPort: 8086

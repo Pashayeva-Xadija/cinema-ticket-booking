@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Restoran Menyusu – Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root{ --hero-bg:url('https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1600&auto=format&fit=crop'); --brand:#ff6a3d; --brand-dark:#e2552b; --soft:#f8f5f2; }
+        body{background:var(--soft);}
+        .navbar{background:#ffffffcc;backdrop-filter:blur(6px);border-bottom:1px solid #eee;}
+        .navbar-brand{font-weight:800;letter-spacing:.3px}
+        .btn-brand{background:var(--brand);color:#fff;border:none}
+        .btn-brand:hover{background:var(--brand-dark);color:#fff}
+        .hero{min-height:42vh;display:flex;align-items:center;color:#fff;background-image:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),var(--hero-bg);background-size:cover;background-position:center;}
+        .hero h1{font-weight:900;font-size:clamp(28px,5vw,48px)}
+        .chip{background:#ffffff22;border:1px solid #ffffff33;color:#fff;padding:6px 10px;border-radius:999px;font-size:12px}
+        .menu-card{border:0;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.06);border-radius:14px;background:#fff;transition:.15s}
+        .menu-card:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(0,0,0,.1)}
+        .menu-card img{width:100%;height:180px;object-fit:cover}
+        .price{font-weight:800;color:var(--brand)}
+        .badge-cat{background:#f1efe9;color:#6c584c}
+        .admin-panel .card{border:0;box-shadow:0 10px 24px rgba(0,0,0,.06);border-radius:14px}
+        .admin-only{display:none;}
+    </style>
+</head>
+<body>
+
+
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">🍽️ Restoran Menyu</a>
+
+        <div class="ms-auto d-flex align-items-center gap-2 flex-nowrap">
+
+            <button id="btnOpenCart" class="btn btn-outline-dark btn-sm position-relative">
+                🛒 Səbət
+                <span id="cartCount" class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">0</span>
+            </button>
+
+
+            <button id="btnOpenAuth" class="btn btn-outline-dark btn-sm">Giriş / Qeydiyyat</button>
+
+
+            <div class="dropdown" id="accountDropdown" style="display:none;">
+                <button class="btn btn-outline-dark btn-sm dropdown-toggle" data-bs-toggle="dropdown">Hesab</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" id="menuMe">Kartlarım</a></li>
+                    <li><a class="dropdown-item" href="#" id="menuOrders">Sifarişlərim</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" id="menuLogout">Çıxış</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="container py-5">
+        <span class="chip">Spring Boot • PostgreSQL • JWT</span>
+        <h1 class="mt-3 mb-2">Restoran Menyusu – Canlı Demo</h1>
+        <p class="lead mb-0">Məhsulları görün, səbətə atın, ünvanla sifariş verin.</p>
+        <div class="mt-3 d-flex gap-2">
+            <a href="/swagger-ui/index.html" class="btn btn-light btn-sm" target="_blank" rel="noopener">Swagger</a>
+            <button id="btnHeroAuth" class="btn btn-brand btn-sm">Giriş / Qeydiyyat</button>
+        </div>
+    </div>
+</header>
+
+<div id="globalAlert" class="alert alert-info py-2 small text-center m-0" role="alert" style="display:none;"></div>
+
+
+<section id="adminPanel" class="admin-panel container admin-only">
+    <div class="row g-4 mt-4">
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Yeni kateqoriya</h5>
+                    <div class="mb-2"><label class="form-label">Ad</label><input id="cName" class="form-control" placeholder="Məs: İçkilər"></div>
+                    <div class="mb-3"><label class="form-label">Açıqlama</label><input id="cDesc" class="form-control" placeholder="Qısa təsvir"></div>
+                    <button id="btnAddCat" class="btn btn-brand">Kateqoriya əlavə et</button><span id="catMsg" class="ms-2 small"></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Yeni məhsul</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label">Ad</label><input id="pName" class="form-control"></div>
+                        <div class="col-md-3"><label class="form-label">Qiymət</label><input id="pPrice" type="number" step="0.01" class="form-control"></div>
+                        <div class="col-md-5"><label class="form-label">Kateqoriya</label><select id="pCategory" class="form-select"><option value="">— seçin —</option></select></div>
+                        <div class="col-md-8"><label class="form-label">Açıqlama</label><input id="pDesc" class="form-control"></div>
+                        <div class="col-md-4"><label class="form-label">Şəkil URL</label><input id="pImage" class="form-control" placeholder="https://..."></div>
+                    </div>
+                    <div class="mt-3"><button id="btnAdd" class="btn btn-brand">Məhsul əlavə et</button><span id="addMsg" class="ms-3 small"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<main class="container my-5">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <h4 class="m-0">Məhsullar</h4>
+        <div class="d-flex gap-2">
+            <div class="input-group input-group-sm" style="width:auto; max-width:380px;">
+                <input id="search" class="form-control" placeholder="Axtarış...">
+                <select id="catFilter" class="form-select" style="max-width:210px;">
+                    <option value="">Bütün kateqoriyalar</option>
+                </select>
+            </div>
+            <button id="btnRefresh" class="btn btn-outline-secondary btn-sm">Yenilə</button>
+        </div>
+    </div>
+    <div id="productsRow" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4"></div>
+    <div id="emptyState" class="text-center text-muted my-5" style="display:none;">Hələ məhsul yoxdur.</div>
+</main>
+
+<div class="modal fade" id="meModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg"><div class="modal-content border-0">
+        <div class="modal-header"><h5 class="modal-title">Hesabım • Kartlar</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="meBody">
+
+        </div>
+    </div></div>
+</div>
+
+
+<div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0">
+        <div class="modal-header">
+            <ul class="nav nav-tabs card-header-tabs" id="authTabs">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabLogin">Daxil ol</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSignup">Qeydiyyat</button></li>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="tab-content p-3">
+            <div class="tab-pane fade show active" id="tabLogin">
+                <div class="mb-2"><label class="form-label">Email</label><input id="lEmail" class="form-control" placeholder="email@example.com"></div>
+                <div class="mb-2"><label class="form-label">Şifrə</label><input id="lPassword" type="password" class="form-control" placeholder="••••••"></div>
+                <div id="loginMsg" class="small text-muted mb-2"></div>
+                <button id="btnLogin" class="btn btn-brand w-100">Daxil ol</button>
+            </div>
+            <div class="tab-pane fade" id="tabSignup">
+                <div class="mb-2"><label class="form-label">Ad</label><input id="sName" class="form-control" placeholder="Ad Soyad"></div>
+                <div class="mb-2"><label class="form-label">Email</label><input id="sEmail" class="form-control" placeholder="email@example.com"></div>
+                <div class="mb-2"><label class="form-label">Şifrə</label><input id="sPassword" type="password" class="form-control" placeholder="••••••"></div>
+                <div id="signupMsg" class="small text-muted mb-2"></div>
+                <button id="btnSignup" class="btn btn-brand w-100">Qeydiyyatdan keç</button>
+            </div>
+        </div>
+    </div></div>
+</div>
+
+
+<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header"><h5 class="modal-title">Səbət</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div id="cartBody"></div>
+                <hr>
+
+
+                <div class="mb-2">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="delType" id="optPickup" value="pickup" checked>
+                        <label class="form-check-label" for="optPickup">Restorandan götürəcəm</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="delType" id="optDelivery" value="delivery">
+                        <label class="form-check-label" for="optDelivery">Çatdırılsın</label>
+                    </div>
+                </div>
+                <div id="deliveryFields" style="display:none;">
+                    <div class="mb-2"><label class="form-label">Ünvan</label><input id="address" class="form-control" placeholder="Şəhər/Rayon, küçə, bina, mənzil..."></div>
+                    <div class="mb-2"><label class="form-label">Çatdırılma haqqı (AZN)</label><input id="deliveryFee" type="number" step="0.01" class="form-control" value="3.00"></div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <strong>Cəm: <span id="cartTotal">0 AZN</span></strong>
+                    <div class="btn-group">
+                        <button id="btnCheckoutOffline" class="btn btn-brand">Kassada ödə (OFFLINE)</button>
+                        <button id="btnCheckoutOnline"  class="btn btn-outline-dark">Onlayn ödə (ONLINE)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const $ = s => document.querySelector(s);
+    const fmtAZN = new Intl.NumberFormat('az-AZ',{style:'currency',currency:'AZN',maximumFractionDigits:2});
+    const esc = (s='') => s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'" :'&#39;'}[m]));
+    const token = () => localStorage.getItem('token')||'';
+    const setToken = t => { t?localStorage.setItem('token',t):localStorage.removeItem('token'); };
+    const authHeaders = () => { const h={'Content-Type':'application/json'}; const t=token(); if(t) h.Authorization='Bearer '+t; return h; };
+    const showAlert = (msg,type='info') => { const el=document.getElementById('globalAlert'); el.className=`alert alert-${type} py-2 small text-center m-0`; el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',2600); };
+
+    const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+    const meModal   = new bootstrap.Modal(document.getElementById('meModal'));
+    const cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+
+
+    document.getElementById('btnOpenAuth').onclick = ()=> authModal.show();
+    document.getElementById('btnHeroAuth').onclick  = ()=> authModal.show();
+
+    document.getElementById('menuLogout').onclick = async (e)=>{
+        e.preventDefault();
+        setToken(''); localStorage.removeItem('roles');
+        await updateAuthUI(); await loadCart();
+        showAlert('Çıxış edildi','secondary');
+    };
+
+    document.getElementById('menuMe').onclick = async (e)=>{ e.preventDefault(); if(!token()) return authModal.show(); openCards(); };
+    document.getElementById('menuOrders').onclick = (e)=>{ e.preventDefault(); showAlert('Sifarişlərim UI-sini sonra əlavə edəcəyik','secondary'); };
+
+    document.getElementById('btnOpenCart').onclick = async ()=>{
+        if(!token()){
+            document.getElementById('cartBody').innerHTML = `
+        <div class="text-center text-muted py-4">
+          Səbətdən istifadə üçün hesabınıza daxil olun və ya qeydiyyatdan keçin.
+          <div class="mt-3"><button class="btn btn-brand btn-sm" id="openAuthFromCart">Giriş / Qeydiyyat</button></div>
+        </div>`;
+            document.getElementById('cartTotal').textContent = fmtAZN.format(0);
+            cartModal.show();
+            setTimeout(()=>{ const b=document.getElementById('openAuthFromCart'); if(b) b.onclick=()=>authModal.show(); },0);
+            return;
+        }
+        await loadCart(); cartModal.show();
+    };
+
+
+    document.getElementById('btnLogin').onclick = async ()=>{
+        const email=document.getElementById('lEmail').value.trim(), password=document.getElementById('lPassword').value.trim();
+        const msg=document.getElementById('loginMsg'); if(!email||!password){ msg.textContent='Email/şifrə tələb olunur'; msg.className='small text-danger'; return; }
+        try{
+            const r=await fetch('/api/open/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+            if(!r.ok) throw new Error('Login uğursuz: '+r.status);
+            const data=await r.json(); setToken(data.token);
+            msg.textContent='Uğurlu giriş ✅'; msg.className='small text-success';
+            setTimeout(()=>authModal.hide(), 500);
+            await afterAuthChanged();
+        }catch(e){ msg.textContent=e.message; msg.className='small text-danger'; }
+    };
+
+    document.getElementById('btnSignup').onclick = async ()=>{
+        const name=document.getElementById('sName').value.trim();
+        const email=document.getElementById('sEmail').value.trim();
+        const password=document.getElementById('sPassword').value.trim();
+        const msg=document.getElementById('signupMsg');
+        if(!name||!email||!password){ msg.textContent='Bütün xanaları doldurun'; msg.className='small text-danger'; return; }
+        try{
+            const r=await fetch('/api/open/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
+            if(!r.ok) throw new Error('Qeydiyyat uğursuz: '+r.status);
+            const data=await r.json(); setToken(data.token);
+            msg.textContent='Uğurlu qeydiyyat ✅'; msg.className='small text-success';
+            setTimeout(()=>authModal.hide(), 500);
+            await afterAuthChanged();
+        }catch(e){ msg.textContent=e.message; msg.className='small text-danger'; }
+    };
+
+    async function fetchMe(){
+        try{
+            const r = await fetch('/api/open/me', { headers: authHeaders() });
+            if(!r.ok) return {name:null, roles:[]};
+            const data = await r.json();
+            const roles = (data.authorities||[]).map(a=>a.authority);
+            localStorage.setItem('roles', JSON.stringify(roles));
+            return {name:data.name, roles};
+        }catch{ return {name:null, roles:[]}; }
+    }
+    const hasRole = role => { try{ return (JSON.parse(localStorage.getItem('roles')||'[]')||[]).includes(role); }catch{return false;} };
+
+    async function updateAuthUI(){
+        const on = !!token();
+        if(on) await fetchMe(); else localStorage.removeItem('roles');
+        document.getElementById('btnOpenAuth').style.display = on ? 'none' : 'inline-block';
+        document.getElementById('accountDropdown').style.display = on ? 'block' : 'none';
+        const isAdmin = hasRole('ROLE_ADMIN');
+        document.querySelectorAll('.admin-only').forEach(el=>{ el.style.display = (on && isAdmin) ? '' : 'none'; });
+    }
+    async function afterAuthChanged(){ await updateAuthUI(); await loadCategories(); await loadProducts(); await loadCart(); }
+
+
+    let allItems=[]; let cart={items:[], total:0};
+
+    function renderItems(items){
+        const row=document.getElementById('productsRow'), empty=document.getElementById('emptyState');
+        row.innerHTML=''; empty.style.display = items.length? 'none':'block';
+        items.forEach(p=>{
+            const col=document.createElement('div'); col.className='col';
+            const img=p.imageUrl || 'https://source.unsplash.com/800x600/?food,plate';
+            col.innerHTML=`
+        <div class="card menu-card h-100">
+          <img src="${esc(img)}" alt="${esc(p.name||'Məhsul')}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <h5 class="card-title m-0">${esc(p.name||'')}</h5>
+              <div class="price">${p.price!=null?fmtAZN.format(p.price):''}</div>
+            </div>
+            ${p.description?`<p class="card-text small text-muted mt-2 mb-2">${esc(p.description)}</p>`:''}
+            <span class="badge badge-cat">${p.categoryName?esc(p.categoryName):(p.categoryId!=null?('#'+p.categoryId):'Kateqoriya')}</span>
+          </div>
+          <div class="card-footer bg-white border-0 pt-0 d-flex justify-content-between">
+            <button class="btn btn-outline-primary btn-sm" data-add="${p.id}">Səbətə at</button>
+            <button class="btn btn-outline-danger btn-sm admin-only" data-del="${p.id}">Sil</button>
+          </div>
+        </div>`;
+            row.appendChild(col);
+        });
+
+
+        document.querySelectorAll('[data-add]').forEach(btn=>{
+            btn.onclick = async ()=>{
+                if(!token()){ authModal.show(); return; }
+                const id = Number(btn.getAttribute('data-add'));
+                try{
+                    const r = await fetch('/api/cart/items', { method:'POST', headers: authHeaders(), body: JSON.stringify({ productId:id, quantity:1 }) });
+                    if(!r.ok) throw new Error('Səbətə əlavə olunmadı: '+r.status);
+                    showAlert('Səbətə əlavə olundu ✅','success');
+                    await loadCart(); cartModal.show();
+                }catch(e){ showAlert(e.message,'danger'); }
+            };
+        });
+
+
+        document.querySelectorAll('[data-del]').forEach(btn=>{
+            btn.onclick = async ()=>{
+                const id = btn.getAttribute('data-del');
+                if(!confirm(`Silinsin? ID=${id}`)) return;
+                try{
+                    const r = await fetch(`/api/products/${id}`, { method:'DELETE', headers: authHeaders() });
+                    if(!r.ok) throw new Error('Silinmədi: '+r.status);
+                    showAlert('Silindi ✅','success'); loadProducts();
+                }catch(e){ showAlert(e.message,'danger'); }
+            };
+        });
+    }
+
+    function filterAndRender(){
+        const q=($('#search').value||'').toLowerCase().trim();
+        const cf=$('#catFilter').value||'';
+        renderItems(allItems.filter(p =>
+            (!q || (p.name||'').toLowerCase().includes(q)) &&
+            (!cf || String(p.categoryId)===cf)
+        ));
+    }
+
+    async function loadCategories(){
+        try{
+            const r=await fetch('/api/categories'); if(!r.ok) throw new Error('Kateqoriyalar yüklənmədi: '+r.status);
+            const cats=await r.json();
+            const sel=$('#pCategory'); if(sel){ sel.innerHTML='<option value="">— seçin —</option>'; cats.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.id} — ${c.name}`; sel.appendChild(o); }); }
+            const catFilter=$('#catFilter'); catFilter.innerHTML='<option value="">Bütün kateqoriyalar</option>'; cats.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.name; catFilter.appendChild(o); });
+        }catch(e){ showAlert(e.message,'warning'); }
+    }
+
+    async function loadProducts(){
+        try{
+            const r=await fetch('/api/products'); if(!r.ok) throw new Error('Məhsullar yüklənmədi: '+r.status);
+            allItems = await r.json(); filterAndRender(); await updateAuthUI();
+        }catch(e){ showAlert(e.message,'danger'); }
+    }
+
+
+    $('#btnAdd').onclick = async ()=>{
+        const name=$('#pName').value.trim(), price=$('#pPrice').value.trim(), categoryId=$('#pCategory').value.trim();
+        const description=$('#pDesc').value.trim(), imageUrl=$('#pImage').value.trim();
+        const addMsg=$('#addMsg');
+        if(!name||!price||!categoryId){ addMsg.textContent='Ad, qiymət və kateqoriya tələb olunur'; addMsg.className='small text-danger'; return; }
+        try{
+            const dto={ name, price:Number(price), categoryId:Number(categoryId), description: description||null, imageUrl: imageUrl||null };
+            const r = await fetch('/api/products',{ method:'POST', headers: authHeaders(), body: JSON.stringify(dto) });
+            if(!r.ok){ const t=await r.text(); throw new Error(`Xəta ${r.status}: ${t}`); }
+            addMsg.textContent='Məhsul əlavə olundu ✅'; addMsg.className='small text-success';
+            $('#pName').value=''; $('#pPrice').value=''; $('#pCategory').value=''; $('#pDesc').value=''; $('#pImage').value='';
+            loadProducts();
+        }catch(e){ addMsg.textContent=e.message; addMsg.className='small text-danger'; }
+    };
+    $('#btnAddCat').onclick = async ()=>{
+        const name=$('#cName').value.trim(); const description=$('#cDesc').value.trim(); const catMsg=$('#catMsg');
+        if(!name){ catMsg.textContent='Ad tələb olunur'; catMsg.className='small text-danger'; return; }
+        try{
+            const r=await fetch('/api/categories',{ method:'POST', headers: authHeaders(), body: JSON.stringify({name, description: description||null}) });
+            if(!r.ok){ const t=await r.text(); throw new Error(`Xəta ${r.status}: ${t}`); }
+            catMsg.textContent='Kateqoriya əlavə olundu ✅'; catMsg.className='small text-success'; $('#cName').value=''; $('#cDesc').value='';
+            loadCategories();
+        }catch(e){ catMsg.textContent=e.message; catMsg.className='small text-danger'; }
+    };
+
+
+    async function loadCart(){
+        if(!token()){ cart={items:[], total:0}; updateCartUI(); return; }
+        try{
+            const r=await fetch('/api/cart',{ headers: authHeaders() }); if(!r.ok) throw new Error('Səbət yüklənmədi: '+r.status);
+            cart = await r.json(); updateCartUI();
+        }catch(e){ showAlert(e.message,'warning'); }
+    }
+
+    function calcGrandTotal(){
+        const isDelivery = $('#optDelivery').checked;
+        const fee = isDelivery ? Number($('#deliveryFee').value||0) : 0;
+        const grand = (cart.total||0) + fee;
+        $('#cartTotal').textContent = fmtAZN.format(grand);
+    }
+
+    function updateCartUI(){
+        const count = (cart.items||[]).reduce((s,i)=>s+(i.quantity||0),0);
+        $('#cartCount').textContent = count;
+
+        const body=$('#cartBody');
+        if(!cart.items || cart.items.length===0){
+            body.innerHTML = '<div class="text-center text-muted py-4">Səbət boşdur.</div>';
+        } else {
+            body.innerHTML = `
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead><tr><th>Məhsul</th><th>Qiymət</th><th>Ədəd</th><th>Cəm</th><th></th></tr></thead>
+            <tbody>
+              ${cart.items.map(i=>`
+                <tr>
+                  <td>${esc(i.productName||'')}</td>
+                  <td>${i.unitPrice!=null?fmtAZN.format(i.unitPrice):''}</td>
+                  <td style="max-width:120px;">
+                    <div class="input-group input-group-sm">
+                      <button class="btn btn-outline-secondary" data-qty-dec="${i.productId}">-</button>
+                      <input class="form-control text-center" data-qty-input="${i.productId}" value="${i.quantity}">
+                      <button class="btn btn-outline-secondary" data-qty-inc="${i.productId}">+</button>
+                    </div>
+                  </td>
+                  <td>${i.lineTotal!=null?fmtAZN.format(i.lineTotal):''}</td>
+                  <td class="text-end"><button class="btn btn-sm btn-outline-danger" data-remove="${i.productId}">Sil</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+        }
+        document.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=()=>removeItem(Number(btn.getAttribute('data-remove'))));
+        document.querySelectorAll('[data-qty-inc]').forEach(btn=>btn.onclick=()=>changeQty(Number(btn.getAttribute('data-qty-inc')), +1));
+        document.querySelectorAll('[data-qty-dec]').forEach(btn=>btn.onclick=()=>changeQty(Number(btn.getAttribute('data-qty-dec')), -1));
+        document.querySelectorAll('[data-qty-input]').forEach(inp=>inp.onchange=()=>setQty(Number(inp.getAttribute('data-qty-input')), Number(inp.value)||1));
+        calcGrandTotal();
+    }
+    async function removeItem(productId){
+        try{ const r=await fetch(`/api/cart/items/${productId}`,{method:'DELETE',headers: authHeaders()}); if(!r.ok) throw new Error('Səbətdən silinmədi: '+r.status); await loadCart(); }
+        catch(e){ showAlert(e.message,'danger'); }
+    }
+    async function setQty(productId, qty){
+        try{ const r=await fetch(`/api/cart/items/${productId}?qty=${qty}`,{method:'PUT',headers: authHeaders()}); if(!r.ok) throw new Error('Miqdar dəyişmədi: '+r.status); await loadCart(); }
+        catch(e){ showAlert(e.message,'danger'); }
+    }
+    function changeQty(productId, delta){ const cur=(cart.items.find(i=>i.productId===productId)?.quantity)||1; setQty(productId, Math.max(1, cur+delta)); }
+
+    $('#optPickup').onchange = ()=>{ $('#deliveryFields').style.display='none'; calcGrandTotal(); };
+    $('#optDelivery').onchange= ()=>{ $('#deliveryFields').style.display='block'; calcGrandTotal(); };
+    $('#deliveryFee').oninput  = calcGrandTotal;
+
+    $('#btnCheckoutOffline').onclick = ()=> checkout('OFFLINE');
+    $('#btnCheckoutOnline').onclick  = ()=> checkout('ONLINE');
+
+    async function checkout(method){
+        try{
+            if(!token()){ authModal.show(); return; }
+            if(!cart.items || cart.items.length===0){ showAlert('Səbət boşdur','warning'); return; }
+            const isDelivery = $('#optDelivery').checked;
+            const deliveryAddress = isDelivery ? ($('#address').value.trim()||null) : null;
+            const deliveryFee = isDelivery ? Number($('#deliveryFee').value||0) : 0;
+
+            const r = await fetch('/api/orders/checkout',{
+                method:'POST', headers: authHeaders(), body: JSON.stringify({ paymentMethod: method, deliveryAddress, deliveryFee })
+            });
+            if(!r.ok){ const t=await r.text(); throw new Error(`Checkout uğursuz: ${r.status} ${t}`); }
+            const order=await r.json();
+            showAlert(`Sifariş #${order.id} yaradıldı ✅`, 'success');
+            cart={items:[], total:0}; updateCartUI(); cartModal.hide();
+        }catch(e){ showAlert(e.message,'danger'); }
+    }
+
+
+    async function loadMyCards(){
+        const r=await fetch('/api/account/cards',{headers:authHeaders()});
+        if(!r.ok) throw new Error('Kartlar yüklənmədi');
+        return await r.json();
+    }
+    async function openCards(){
+        try{
+            const cards = await loadMyCards();
+            const html = `
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <h6 class="mb-2">Kartlarım</h6>
+            <ul class="list-group">
+              ${cards.length? cards.map(c=>`
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <b>${c.brand}</b> •••• ${c.last4}
+                    <span class="text-muted">(${String(c.expMonth).padStart(2,'0')}/${c.expYear})</span>
+                    ${c.defaultCard? '<span class="badge bg-success ms-2">Default</span>':''}
+                  </div>
+                  <div class="btn-group btn-group-sm">
+                    ${c.defaultCard? '' : `<button class="btn btn-outline-primary" data-setdef="${c.id}">Default et</button>`}
+                    <button class="btn btn-outline-danger" data-del="${c.id}">Sil</button>
+                  </div>
+                </li>`).join('') : '<li class="list-group-item text-muted">Kart yoxdur</li>'}
+            </ul>
+          </div>
+          <div class="col-lg-5">
+            <h6 class="mb-2">Yeni kart əlavə et (DEMO)</h6>
+            <div class="mb-2"><label class="form-label">Kart nömrəsi</label><input id="cardNumber" class="form-control" placeholder="4111 1111 1111 1111"></div>
+            <div class="row g-2">
+              <div class="col-4"><label class="form-label">Ay</label><input id="cardExpM" type="number" class="form-control" placeholder="MM"></div>
+              <div class="col-4"><label class="form-label">İl</label><input id="cardExpY" type="number" class="form-control" placeholder="YYYY"></div>
+              <div class="col-4"><label class="form-label">CVC</label><input id="cardCvc"  type="number" class="form-control" placeholder="CVC"></div>
+            </div>
+            <button id="btnSaveCard" class="btn btn-brand w-100 mt-3">Kartı saxla</button>
+            <div class="small text-muted mt-2">Qeyd: Bu demo üçündür. Realda kart məlumatı provayder SDK-si ilə tokenləşdirilməlidir.</div>
+          </div>
+        </div>`;
+            $('#meBody').innerHTML = html; meModal.show();
+
+
+            $('#btnSaveCard').onclick = async ()=>{
+                try{
+                    const dto = {
+                        cardNumber: $('#cardNumber').value.trim(),
+                        expMonth: Number($('#cardExpM').value),
+                        expYear:  Number($('#cardExpY').value),
+                        cvc:      $('#cardCvc').value.trim()
+                    };
+                    const r=await fetch('/api/account/cards',{method:'POST',headers:authHeaders(),body:JSON.stringify(dto)});
+                    if(!r.ok){ const t=await r.text(); throw new Error('Kart saxlanmadı: '+t); }
+                    showAlert('Kart saxlandı ✅','success'); openCards();
+                }catch(e){ showAlert(e.message,'danger'); }
+            };
+            document.querySelectorAll('[data-del]').forEach(b=> b.onclick = async ()=>{
+                const id=b.getAttribute('data-del');
+                const r=await fetch(`/api/account/cards/${id}`,{method:'DELETE',headers:authHeaders()});
+                if(!r.ok) return showAlert('Silinmədi','danger');
+                showAlert('Silindi ✅','success'); openCards();
+            });
+            document.querySelectorAll('[data-setdef]').forEach(b=> b.onclick = async ()=>{
+                const id=b.getAttribute('data-setdef');
+                const r=await fetch(`/api/account/cards/${id}/default`,{method:'PUT',headers:authHeaders()});
+                if(!r.ok) return showAlert('Dəyişmədi','danger');
+                showAlert('Default kart seçildi ✅','success'); openCards();
+            });
+
+        }catch(e){ showAlert(e.message,'danger'); }
+    }
+
+
+    $('#btnRefresh').onclick = loadProducts;
+    $('#search').addEventListener('input', filterAndRender);
+    $('#catFilter').addEventListener('change', filterAndRender);
+
+
+    (async function init(){
+        await updateAuthUI(); await loadCategories(); await loadProducts(); await loadCart();
+    })();
+</script>
+</body>
+</html>

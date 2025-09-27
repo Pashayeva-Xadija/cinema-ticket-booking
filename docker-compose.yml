@@ -1,0 +1,176 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "9090:8084"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKey_MustBeAtLeast32Chars!!}
+      SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPSERVER_WIRETAP: "true"
+      SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_WIRETAP: "true"
+    depends_on:
+      - auth-service
+      - booking-service
+      - ticket-service
+      - inventory-service
+      - payment-service
+      - showtime-service
+      - notification-service
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/authdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKey_MustBeAtLeast32Chars!!}
+      JWT_EXPIRATION: 86400000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  showtime-service:
+    build: ./showtime-service
+    container_name: showtime-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/showtimedb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKey_MustBeAtLeast32Chars!!}
+      JWT_EXPIRATION: 86400000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  booking-service:
+    build: ./booking-service
+    container_name: booking-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bookingdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKey_MustBeAtLeast32Chars!!}
+      JWT_EXPIRATION: 86400000
+      INVENTORY_URL: http://inventory-service:8081
+      CLIENTS_AUTH_BASE_URL: http://auth-service:8085
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      APP_RABBIT_EXCHANGE: booking.exchange
+      APP_RABBIT_QUEUE: notification.queue
+      APP_RABBIT_ROUTING: booking.created
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      inventory-service:
+        condition: service_started
+      auth-service:
+        condition: service_started
+
+  ticket-service:
+    build: ./ticket-service
+    container_name: ticket-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ticketdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKey_MustBeAtLeast32Chars!!}
+      JWT_EXPIRATION: 86400000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inventorydb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKey_MustBeAtLeast32Chars!!}
+      JWT_EXPIRATION: 86400000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    environment:
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ""
+      SPRING_MAIL_PASSWORD: your-app-password
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+      APP_RABBIT_EXCHANGE: booking.exchange
+      APP_RABBIT_QUEUE: notification.queue
+      APP_RABBIT_ROUTING: booking.created
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/paymentdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      JWT_SECRET: ${JWT_SECRET:-MySuperSecretKey_MustBeAtLeast32Chars!!}
+      JWT_EXPIRATION: 86400000
+      CLIENTS_BOOKING_BASE_URL: http://booking-service:8087
+      CLIENTS_TICKET_BASE_URL:  http://ticket-service:8088
+      CLIENTS_NOTIFICATION_BASE_URL: http://notification-service:8083
+    depends_on:
+      postgres:
+        condition: service_healthy
+      booking-service:
+        condition: service_started
+      ticket-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+
+volumes:
+  pgdata:

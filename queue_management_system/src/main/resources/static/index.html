@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Bank Queue Service — Demo UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root{
+            --bg:#0b1020; --card:#141b34; --card-2:#10162b; --pri:#5ad67d; --sec:#6ea8fe;
+            --danger:#ff6b6b; --text:#e9eefb; --muted:#9fb0d0; --border:#22305b; --chip:#1d2546;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial;
+            background: radial-gradient(1200px 800px at 20% -10%, #1f2b57 0%, rgba(31,43,87,0) 60%),
+            radial-gradient(900px 700px at 120% 10%, #0b4b3c 0%, rgba(11,75,60,0) 60%),
+            var(--bg);
+            color:var(--text);
+        }
+        header{padding:24px 20px; background:linear-gradient(90deg,#17305d,#102040); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:5;}
+        .brand{display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.3px;}
+        .brand .logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 210deg at 50% 50%, #5ad67d, #2ed8b7 20%, #6ea8fe 50%, #b37bff 80%, #5ad67d); box-shadow:0 8px 30px rgba(90,214,125,.4) inset, 0 2px 10px rgba(0,0,0,.35);}
+        .container{max-width:1200px; margin:0 auto; padding:24px 16px 60px}
+        input, button{background:var(--card-2); color:var(--text); border:1px solid var(--border); padding:10px 12px; border-radius:10px; outline:none; font-size:14px;}
+        .btn{cursor:pointer; border:0; font-weight:600; background:#5ad67d; color:#0a0f1f} .btn:hover{filter:brightness(1.06)}
+        .btn-sec{background:#6ea8fe; color:#0a0f1f}
+        .btn-ghost{background:transparent; border:1px solid var(--border); color:var(--text)}
+        .btn-danger{background:#ff6b6b; color:#0a0f1f}
+        .grid{display:grid; gap:16px}
+        @media(min-width:900px){ .grid-2{grid-template-columns:1fr 1fr} }
+        .card{background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 30%), var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:0 8px 40px rgba(0,0,0,.25);}
+        .card h3{margin:0 0 12px 0; font-size:16px; letter-spacing:.4px}
+        .muted{color:var(--muted); font-size:13px}
+        .table{width:100%; border-collapse:collapse; font-size:14px}
+        .table th,.table td{padding:10px 12px; border-bottom:1px solid var(--border); text-align:left}
+        .tabs{display:flex; gap:8px; margin:14px 0 6px 0; flex-wrap:wrap}
+        .tab{padding:8px 12px; border-radius:12px; background:var(--chip); border:1px solid var(--border); cursor:pointer}
+        .tab.active{background:linear-gradient(180deg, #1a2a5e, #14234c); border-color:#2a3c78}
+        .toast{position:fixed; right:16px; bottom:16px; background:#12204a; border:1px solid #234; color:#e9eefb; padding:12px 14px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.35); display:none; max-width:480px; z-index:9999}
+        .toast.show{display:block; animation:pop .2s ease-out}
+        @keyframes pop{from{transform:translateY(8px); opacity:.6} to{transform:none; opacity:1}}
+        .flex{display:flex; gap:10px; align-items:center}
+        .spacer{flex:1}
+
+
+        .tiles{display:grid; gap:14px}
+        @media(min-width:700px){ .tiles{grid-template-columns:repeat(3,1fr)} }
+        @media(max-width:699px){ .tiles{grid-template-columns:1fr} }
+        .tile{display:flex; align-items:center; justify-content:center; text-align:center; padding:28px 16px; min-height:110px; cursor:pointer; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%), var(--card-2); border:1px solid var(--border); box-shadow:0 6px 28px rgba(0,0,0,.22); font-weight:700;}
+        .tile:hover{filter:brightness(1.04)}
+        .cust-back{background:transparent; border:1px solid var(--border); padding:8px 10px; border-radius:10px; cursor:pointer}
+        .search{width:100%}
+        .svc{display:flex; align-items:center; gap:12px; justify-content:space-between; padding:10px 12px; background:var(--chip); border:1px solid var(--border); border-radius:12px}
+        .svc-title{font-weight:600}
+
+
+        .badge{display:inline-flex;align-items:center;gap:8px;
+            padding:6px 12px;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:.3px;
+            border:1px solid rgba(255,255,255,.08);box-shadow:0 4px 18px rgba(0,0,0,.25) inset}
+        .badge-wait{background:rgba(159,176,208,.18); color:#e0e8ff; border-color:rgba(159,176,208,.35)}
+        .badge-called{background:rgba(110,168,254,.22); color:#cfe1ff; border-color:rgba(110,168,254,.45)}
+        .badge-inp{background:rgba(90,214,125,.22); color:#cff6db; border-color:rgba(90,214,125,.45)}
+        .badge-fin{background:rgba(179,164,255,.25); color:#dcd4ff; border-color:rgba(179,164,255,.50)}
+        .badge-can{background:rgba(255,107,107,.25); color:#ffd0cf; border-color:rgba(255,107,107,.50)}
+
+
+        .chip{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);font-weight:700;font-size:12px}
+        .chip-wait{background:rgba(159,176,208,.18)}
+        .chip-called{background:rgba(110,168,254,.22)}
+        .chip-inp{background:rgba(90,214,125,.22)}
+        .chip-fin{background:rgba(179,164,255,.25)}
+        .chip-can{background:rgba(255,107,107,.25)}
+    </style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <div class="brand">
+            <div class="logo"></div>
+            <div>
+                <div style="font-size:18px;">Bank Queue Service — Demo UI</div>
+                <div class="muted">Admin · Operator · Public (Monitor & Open Ticket)</div>
+            </div>
+            <div class="spacer"></div>
+            <div style="background:#10162b;border:1px solid var(--border);border-radius:999px;padding:6px 10px">API:
+                <input id="baseUrl" style="width:260px;background:transparent;border:0;color:var(--text)">
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="auth">Auth</div>
+        <div class="tab" data-tab="admin">Admin</div>
+        <div class="tab" data-tab="public">Public</div>
+        <div class="tab" data-tab="operator">Operator</div>
+        <div class="tab" data-tab="monitor">Monitor</div>
+        <div class="tab" data-tab="customer">Müştəri</div>
+    </div>
+
+
+    <section class="grid grid-2" data-pane="auth">
+        <div class="card">
+            <h3>Admin – Register/Login</h3>
+            <div class="flex"><input id="adminUser" placeholder="username" value="admin"><input id="adminPass" placeholder="password" type="password" value="admin"></div>
+            <div class="flex"><button class="btn" onclick="register('ADMIN')">Register ADMIN</button><button class="btn-sec" onclick="login('ADMIN')">Login ADMIN</button><button class="btn-ghost" onclick="clearToken('admin')">Logout (clear token)</button></div>
+            <div class="muted">Token: <span id="adminTokenPreview" style="font-family:monospace">—</span></div>
+        </div>
+        <div class="card">
+            <h3>Operator – Register/Login</h3>
+            <div class="flex"><input id="opUser" placeholder="username" value="operator1"><input id="opPass" placeholder="password" type="password" value="operator"></div>
+            <div class="flex"><button class="btn" onclick="register('OPERATOR')">Register OPERATOR</button><button class="btn-sec" onclick="login('OPERATOR')">Login OPERATOR</button><button class="btn-ghost" onclick="clearToken('operator')">Logout (clear token)</button></div>
+            <div class="muted">Token: <span id="opTokenPreview" style="font-family:monospace">—</span></div>
+        </div>
+    </section>
+
+
+    <section class="grid grid-2" data-pane="admin" style="display:none">
+        <div class="card">
+            <h3>Service Types <span style="font-size:11px;background:#0b1b34;border:1px solid var(--border);padding:2px 6px;border-radius:7px">/api/admin/service-types</span></h3>
+            <div class="flex"><input id="svcName" placeholder="Service name e.g. Consultation"><button class="btn" onclick="createServiceType()">Create</button><button class="btn-sec" onclick="loadServiceTypes()">Load list</button></div>
+            <div id="svcList" class="muted">No data</div>
+        </div>
+        <div class="card">
+            <h3>Desks <span style="font-size:11px;background:#0b1b34;border:1px solid var(--border);padding:2px 6px;border-radius:7px">/api/admin/desks</span></h3>
+            <div class="flex"><input id="deskName" placeholder="Desk name e.g. Desk 1"><button class="btn" onclick="createDesk()">Create</button><button class="btn-sec" onclick="loadDesks()">Load list</button></div>
+            <div id="deskList" class="muted">No data</div>
+        </div>
+    </section>
+
+
+    <section class="grid grid-2" data-pane="public" style="display:none">
+        <div class="card">
+            <h3>Open Ticket <span style="font-size:11px;background:#0b1b34;border:1px solid var(--border);padding:2px 6px;border-radius:7px">/api/open-ticket</span></h3>
+            <div class="flex">
+                <select id="svcSelect"><option value="">— Select from loaded Service Types (admin must load) —</option></select>
+                <input id="svcIdManual" placeholder="or enter ServiceType ID">
+            </div>
+            <div class="flex"><button class="btn" onclick="openTicket()">Create Ticket</button></div>
+            <div id="openTicketResult" class="muted">—</div>
+        </div>
+        <div class="card">
+            <h3>Quick Info</h3>
+            <div class="flex"><span class="muted">ADMIN: <span id="adminStatus">logged out</span></span><span class="muted">OPERATOR: <span id="opStatus">logged out</span></span></div>
+            <div class="flex"><button class="btn-ghost" onclick="loadServiceTypes()">Refresh Service Types</button><button class="btn-ghost" onclick="loadDesks()">Refresh Desks</button></div>
+        </div>
+    </section>
+
+
+    <section class="grid grid-2" data-pane="operator" style="display:none">
+        <div class="card">
+            <h3>Call Next <span style="font-size:11px;background:#0b1b34;border:1px solid var(--border);padding:2px 6px;border-radius:7px">/api/operator/desks/{deskId}/call-next</span></h3>
+            <div class="flex"><input id="deskId" placeholder="Desk ID (e.g. 1)"><button class="btn" onclick="callNext()">Call Next</button></div>
+            <div id="callNextResult" class="muted">—</div>
+        </div>
+        <div class="card">
+            <h3>Ticket Actions <span style="font-size:11px;background:#0b1b34;border:1px solid var(--border);padding:2px 6px;border-radius:7px">/api/operator/tickets/{id}/(start|finish|cancel)</span></h3>
+            <div class="flex"><input id="ticketId" placeholder="Ticket ID for action"><button class="btn-sec" onclick="startTicket()">Start</button><button class="btn" onclick="finishTicket()">Finish</button><button class="btn-danger" onclick="cancelTicket()">Cancel</button></div>
+            <div id="ticketActionResult" class="muted">—</div>
+        </div>
+    </section>
+
+
+    <section data-pane="monitor" style="display:none">
+        <div class="card">
+            <div class="flex">
+                <h3 style="margin:0">Live Monitor <span style="font-size:11px;background:#0b1b34;border:1px solid var(--border);padding:2px 6px;border-radius:7px">/api/monitor</span></h3>
+                <div class="spacer"></div>
+                <button class="btn-ghost" onclick="loadMonitor()">Refresh</button>
+                <button class="btn-ghost" onclick="toggleAuto()">Auto: <span id="autoLbl">OFF</span></button>
+            </div>
+            <div class="muted" id="monitorTs" style="margin:8px 0">Last update: —</div>
+
+
+            <div id="monStats" class="flex" style="gap:8px; margin:6px 0 10px 0"></div>
+
+            <table class="table" id="monitorTable">
+                <thead><tr><th>ID</th><th>Number</th><th>Status</th><th>ServiceType</th><th>Desk</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <section data-pane="customer" style="display:none">
+        <div id="cust_tiles_view" class="card">
+            <h3 style="margin:0 0 12px 0">🏦 Bank Xidmətləri Ümumi Siyahısı</h3>
+            <div class="tiles" id="cust_tiles"></div>
+        </div>
+        <div id="cust_detail_view" class="card" style="display:none">
+            <div class="flex">
+                <button class="cust-back" onclick="cust_backToTiles()">← Geri</button>
+                <h3 id="cust_cat_title" style="margin:0">—</h3>
+                <div class="spacer"></div>
+            </div>
+            <div class="flex" style="margin-top:10px"><input class="search" id="cust_detail_search" placeholder="Bu kateqoriyada axtarış..." oninput="cust_filterDetail()"></div>
+            <div id="cust_detail_list" class="flex" style="flex-direction:column;gap:10px;margin-top:6px"></div>
+            <div id="cust_result" class="muted" style="margin-top:10px">—</div>
+        </div>
+    </section>
+
+    <div class="card toast" id="toast"></div>
+</div>
+
+<script>
+
+    const state = { adminToken:sessionStorage.getItem('adminToken')||'', operatorToken:sessionStorage.getItem('operatorToken')||'', auto:false, timer:null };
+    const el = s=>document.querySelector(s);
+    const setBaseDefault = ()=>{ el('#baseUrl').value = el('#baseUrl').value || window.location.origin; };
+    const BASE = ()=> el('#baseUrl').value.replace(/\/+$/, '');
+    const showToast=(msg,ok=true)=>{const t=el('#toast');t.innerText=msg;t.style.borderColor=ok?'#2d6':'#633';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);};
+    const truncate=(s,len=18)=>s?(s.length>len?s.slice(0,len)+'…':s):'—';
+    const updateAuthUI = ()=>{
+        el('#adminTokenPreview').innerText = truncate(state.adminToken);
+        el('#opTokenPreview').innerText = truncate(state.operatorToken);
+        const as = document.getElementById('adminStatus'); if(as) as.innerText = state.adminToken?'logged in':'logged out';
+        const os = document.getElementById('opStatus'); if(os) os.innerText = state.operatorToken?'logged in':'logged out';
+    };
+    async function api(path, method='GET', body=null, role='none'){
+        const headers={'Accept':'application/json'};
+        if(body!==null){ headers['Content-Type']='application/json'; }
+        const token = role==='admin'?state.adminToken: role==='operator'?state.operatorToken:'';
+        if(token) headers['Authorization']='Bearer '+token;
+        const r = await fetch(BASE()+path,{method,headers,body:body?JSON.stringify(body):undefined});
+        const text = await r.text(); let data; try{data=text?JSON.parse(text):{};}catch{data={raw:text};}
+        if(!r.ok){ throw new Error(data?.message || `${r.status} ${r.statusText}`); }
+        return data;
+    }
+
+
+    async function register(role){ try{
+        const isAdmin=role==='ADMIN'; const username=isAdmin?el('#adminUser').value:el('#opUser').value; const password=isAdmin?el('#adminPass').value:el('#opPass').value;
+        await api('/api/auth/register','POST',{username,password,role}); showToast(`Registered ${role} user "${username}"`);
+    }catch(e){ showToast('Register error: '+e.message,false); } }
+    async function login(role){ try{
+        const isAdmin=role==='ADMIN'; const username=isAdmin?el('#adminUser').value:el('#opUser').value; const password=isAdmin?el('#adminPass').value:el('#opPass').value;
+        const res=await api('/api/auth/login','POST',{username,password}); const token=res.accessToken||res.token||res.jwt||res.access_token||'';
+        if(!token) throw new Error('Token not found in response');
+        if(isAdmin){state.adminToken=token;sessionStorage.setItem('adminToken',token);} else {state.operatorToken=token;sessionStorage.setItem('operatorToken',token);}
+        updateAuthUI(); showToast(`${role} login OK`);
+    }catch(e){ showToast('Login error: '+e.message,false); } }
+    function clearToken(which){ if(which==='admin'){state.adminToken='';sessionStorage.removeItem('adminToken');} else {state.operatorToken='';sessionStorage.removeItem('operatorToken');} updateAuthUI(); showToast('Token cleared'); }
+
+    async function createServiceType(){ try{
+        const name=el('#svcName').value.trim(); if(!name) return showToast('Enter service name',false);
+        const res=await api('/api/admin/service-types','POST',{name},'admin'); showToast('Service type created: '+res.name); el('#svcName').value=''; await loadServiceTypes();
+    }catch(e){ showToast('Create service error: '+e.message,false); } }
+    async function loadServiceTypes(){ try{
+        const list=await api('/api/admin/service-types','GET',null,'admin');
+        const wrap=el('#svcList'); wrap.innerHTML=list.length?'':'<span class="muted">Empty</span>';
+        const sel=el('#svcSelect'); if(sel){ sel.innerHTML='<option value="">— Select Service Type —</option>'; }
+        list.forEach(x=>{
+            const row=document.createElement('div'); row.style.margin='6px 0'; row.innerHTML=`<span style="background:#1d2546;border:1px solid var(--border);border-radius:999px;padding:4px 8px;color:#9fb0d0">ID: ${x.id}</span> <span style="margin-left:6px">${x.name}</span>`;
+            wrap.appendChild(row);
+            if(sel){ const opt=document.createElement('option'); opt.value=x.id; opt.textContent=`${x.id} — ${x.name}`; sel.appendChild(opt); }
+        });
+    }catch(e){ showToast('Load services error: '+e.message,false); } }
+    async function createDesk(){ try{
+        const name=el('#deskName').value.trim(); if(!name) return showToast('Enter desk name',false);
+        const res=await api('/api/admin/desks','POST',{name},'admin'); showToast('Desk created: '+res.name); el('#deskName').value=''; await loadDesks();
+    }catch(e){ showToast('Create desk error: '+e.message,false); } }
+    async function loadDesks(){ try{
+        const list=await api('/api/admin/desks','GET',null,'admin');
+        const wrap=el('#deskList'); wrap.innerHTML=list.length?'':'<span class="muted">Empty</span>';
+        list.forEach(x=>{
+            const row=document.createElement('div'); row.style.margin='6px 0'; row.innerHTML=`<span style="background:#1d2546;border:1px solid var(--border);border-radius:999px;padding:4px 8px;color:#9fb0d0">ID: ${x.id}</span> <span style="margin-left:6px">${x.name}</span>`;
+            wrap.appendChild(row);
+        });
+    }catch(e){ showToast('Load desks error: '+e.message,false); } }
+
+    async function openTicket(){ try{
+        const fromSel=el('#svcSelect')?el('#svcSelect').value:''; const manual=el('#svcIdManual')?el('#svcIdManual').value.trim():'';
+        const serviceTypeId=fromSel||manual; if(!serviceTypeId) return showToast('Choose or enter ServiceType ID',false);
+        const res=await api('/api/open-ticket','POST',{serviceTypeId:Number(serviceTypeId)},'none');
+        el('#openTicketResult').innerHTML=`Ticket <b>${res.number||'—'}</b> (ID: ${res.id})`; showToast('Ticket opened: '+(res.number||res.id));
+    }catch(e){ showToast('Open ticket error: '+e.message,false); } }
+
+
+    function statusHTML(s){
+        const m=(s||'').toUpperCase();
+        const cls={
+            WAITING:'badge badge-wait',
+            CALLED:'badge badge-called',
+            IN_PROGRESS:'badge badge-inp',
+            IN_SERVICE:'badge badge-inp',
+            FINISHED:'badge badge-fin',
+            COMPLETED:'badge badge-fin',
+            CANCELED:'badge badge-can',
+            CANCELLED:'badge badge-can'
+        }[m] || 'badge badge-wait';
+        return `<span class="${cls}">${m || '—'}</span>`;
+    }
+
+
+    async function callNext(){ try{
+        const deskId=Number(el('#deskId').value); if(!deskId) return showToast('Enter Desk ID',false);
+        const res=await api(`/api/operator/desks/${deskId}/call-next`,'POST',null,'operator');
+        el('#callNextResult').innerHTML=res?.id?`Next: <b>${res.number}</b> (ID ${res.id}) ${statusHTML(res.status)}`:'No ticket';
+        showToast('Call-next OK'); await loadMonitor(); el('#ticketId').value=res?.id||'';
+    }catch(e){ showToast('Call-next error: '+e.message,false); } }
+    async function ticketAction(action){ try{
+        const id=Number(el('#ticketId').value); if(!id) return showToast('Enter Ticket ID',false);
+        const res=await api(`/api/operator/tickets/${id}/${action}`,'POST',null,'operator');
+        el('#ticketActionResult').innerHTML=`Ticket ${id}: ${statusHTML(res.status)}`; showToast(`Ticket ${action} OK`); await loadMonitor();
+    }catch(e){ showToast(`Ticket ${action} error: `+e.message,false); } }
+    async function startTicket(){ await ticketAction('start'); }
+    async function finishTicket(){ await ticketAction('finish'); }
+    async function cancelTicket(){ await ticketAction('cancel'); }
+
+
+    function renderStats(arr){
+        const cnt = {WAITING:0,CALLED:0,IN_PROGRESS:0,FINISHED:0,CANCELED:0};
+        arr.forEach(x=>{
+            const s=(x.status||'').toUpperCase();
+            if(s==='CANCELLED'){ cnt.CANCELED++; return; }
+            if(cnt[s]!==undefined) cnt[s]++;
+        });
+        const ms = el('#monStats');
+        if(ms){
+            ms.innerHTML = `
+              <span class="chip chip-wait">WAITING: ${cnt.WAITING}</span>
+              <span class="chip chip-called">CALLED: ${cnt.CALLED}</span>
+              <span class="chip chip-inp">IN_PROGRESS: ${cnt.IN_PROGRESS}</span>
+              <span class="chip chip-fin">FINISHED: ${cnt.FINISHED}</span>
+              <span class="chip chip-can">CANCELED: ${cnt.CANCELED}</span>
+            `;
+        }
+    }
+
+    async function loadMonitor(){ try{
+        const list=await api('/api/monitor','GET',null,'none');
+        const tbody=el('#monitorTable tbody'); if(!tbody) return;
+        tbody.innerHTML='';
+        list.forEach(x=>{
+            const tr=document.createElement('tr');
+            tr.innerHTML=`<td>${x.id??''}</td>
+                    <td><b>${x.number??''}</b></td>
+                    <td>${statusHTML(x.status)}</td>
+                    <td>${x.serviceType??''}</td>
+                    <td>${x.desk || '-'}</td>`;
+            tbody.appendChild(tr);
+        });
+        renderStats(list);
+        const ts=document.getElementById('monitorTs'); if(ts) ts.textContent='Last update: '+new Date().toLocaleTimeString();
+    }catch(e){ showToast('Monitor error: '+e.message,false); } }
+    function toggleAuto(){ state.auto=!state.auto; const lbl=el('#autoLbl'); if(lbl) lbl.innerText=state.auto?'ON':'OFF';
+        if(state.auto){ if(state.timer) clearInterval(state.timer); state.timer=setInterval(loadMonitor,4000); loadMonitor(); }
+        else{ clearInterval(state.timer); state.timer=null; } }
+
+
+    const cust_cats={
+        kassa:{title:'1. Kassa və Kart əməliyyatları', services:['Cash Withdrawal (Nağd pul çıxarılması)','Cash Deposit (Nağd pul mədaxili)','Card Issuance (Kartın verilməsi)','Card PIN Reset (Kart PIN bərpası)','Card Blocking / Unblocking (Kart bloklama / açma)','Currency Exchange (Valyuta mübadiləsi)']},
+        hesab:{title:'2. Hesab əməliyyatları', services:['Account Opening (Hesab açılması)','Account Closing (Hesab bağlanması)','Account Update (Məlumatların yenilənməsi)','Balance Inquiry (Balans sorğusu)','Statement Request (Hesab çıxarışı)']},
+        kredit:{title:'3. Kredit əməliyyatları', services:['Loan Application (Kredit müraciəti)','Loan Payment (Kredit ödənişi)','Loan Restructuring (Kredit restrukturizasiyası)','Mortgage Services (İpoteka xidməti)']},
+        odenis:{title:'4. Ödənişlər', services:['Utility Payments (Kommunal ödənişlər)','Mobile Top-up (Mobil balans artırılması)','Government Payments (Dövlət ödənişləri – vergi, rüsum və s.)','Transfers (Pul köçürmələri – daxili və xarici)']},
+        konsultasiya:{title:'5. Konsultasiya və Müştəri dəstəyi', services:['Consultation (Maliyyə məsləhəti)','Customer Support (Ümumi müştəri dəstəyi)','Complaint Handling (Şikayətlərin qəbulu)','Product Information (Məhsullar haqqında məlumat)']}
+    };
+    const canonicalOf=label=>label.split('(')[0].trim();
+    const norm=s=>(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+    let cust_publicST=null;
+    async function cust_fetchPublicServiceTypes(){
+        try{ const list=await api('/api/service-types','GET',null,'none'); if(Array.isArray(list)){cust_publicST=list; return list;} }catch(_){}
+        if(state.adminToken){ try{ const list=await api('/api/admin/service-types','GET',null,'admin'); cust_publicST=list; return list; }catch(_){ } }
+        return null;
+    }
+    async function cust_resolveId(serviceLabel){
+        const wanted=norm(canonicalOf(serviceLabel)); const list=cust_publicST||await cust_fetchPublicServiceTypes();
+        if(Array.isArray(list)){
+            let best=null,score=-1;
+            list.forEach(st=>{
+                const n=norm(st.name); let s=0;
+                if(n===wanted) s=100; else if(n.includes(wanted)) s=80;
+                if(s>score){score=s;best=st;}
+            });
+            if(best) return Number(best.id);
+        }
+        if(state.adminToken){
+            try{ const created=await api('/api/admin/service-types','POST',{name:canonicalOf(serviceLabel)},'admin'); cust_publicST=null; return Number(created.id);}catch(e){}
+        }
+        return null;
+    }
+    async function cust_openTicket(serviceLabel){
+        const id=await cust_resolveId(serviceLabel);
+        if(!id){ showToast('Xidmət hazırda sistemdə aktiv deyil.',false); return; }
+        try{
+            const res=await api('/api/open-ticket','POST',{serviceTypeId:id},'none');
+            el('#cust_result').innerHTML=`Ticket <b>${res.number||'—'}</b> (ID: ${res.id})`;
+            showToast('Bilet yaradıldı: '+(res.number||res.id));
+        }catch(e){ showToast('Bilet yaratma xətası: '+e.message,false); }
+    }
+    function cust_renderTiles(){
+        const wrap=document.getElementById('cust_tiles'); wrap.innerHTML='';
+        Object.entries(cust_cats).forEach(([key,cat])=>{
+            const b=document.createElement('button'); b.className='tile'; b.textContent=cat.title; b.onclick=()=>cust_openCategory(key);
+            wrap.appendChild(b);
+        });
+    }
+    function cust_openCategory(key){
+        const cat=cust_cats[key]; if(!cat) return;
+        document.getElementById('cust_cat_title').textContent=cat.title;
+        const list=document.getElementById('cust_detail_list'); list.innerHTML='';
+        cat.services.forEach(lbl=>{
+            const row=document.createElement('div'); row.className='svc';
+            row.innerHTML=`<div class="svc-title">${lbl}</div><div class="flex"><button class="btn" onclick="cust_openTicket('${lbl.replace(/'/g,"\\'")}')">Bilet al</button></div>`;
+            list.appendChild(row);
+        });
+        document.getElementById('cust_tiles_view').style.display='none';
+        document.getElementById('cust_detail_view').style.display='';
+        document.getElementById('cust_detail_search').value=''; document.getElementById('cust_result').innerHTML='—';
+        cust_fetchPublicServiceTypes();
+    }
+    function cust_backToTiles(){ document.getElementById('cust_detail_view').style.display='none'; document.getElementById('cust_tiles_view').style.display=''; }
+    function cust_filterDetail(){
+        const q=(document.getElementById('cust_detail_search').value||'').toLowerCase();
+        document.querySelectorAll('#cust_detail_list .svc').forEach(n=>{
+            const txt=n.querySelector('.svc-title').textContent.toLowerCase(); n.style.display=txt.includes(q)?'':'none';
+        });
+    }
+
+
+    setBaseDefault(); updateAuthUI(); cust_renderTiles(); cust_fetchPublicServiceTypes();
+    document.querySelectorAll('.tab').forEach(t=>{
+        t.addEventListener('click', ()=>{
+            document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+            const pane=t.getAttribute('data-tab');
+            document.querySelectorAll('[data-pane]').forEach(p=> p.style.display = (p.getAttribute('data-pane')===pane?'':'none'));
+            if(pane==='customer'){ cust_fetchPublicServiceTypes(); }
+        });
+    });
+    loadMonitor();
+</script>
+</body>
+</html>

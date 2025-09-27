@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: cinema
+data:
+  application.yml: |
+    server:
+      port: 8080
+
+    spring:
+      main:
+        web-application-type: reactive
+      cloud:
+        gateway:
+          routes:
+            - id: auth
+              uri: http://auth-service:8085
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - StripPrefix=2
+
+            
+            - id: booking-singular
+              uri: http://booking-service:8087
+              predicates:
+                - Path=/api/booking/**
+              filters:
+                - StripPrefix=2
+            - id: booking-plural
+              uri: http://booking-service:8087
+              predicates:
+                - Path=/api/bookings/**
+              filters:
+                - StripPrefix=2
+
+            - id: showtime
+              uri: http://showtime-service:8086
+              predicates:
+                - Path=/api/showtime/**
+              filters:
+                - StripPrefix=2
+
+            - id: inventory
+              uri: http://inventory-service:8081
+              predicates:
+                - Path=/api/inventory/**
+              filters:
+                - StripPrefix=2
+
+            
+            - id: ticket-singular
+              uri: http://ticket-service:8088
+              predicates:
+                - Path=/api/ticket/**
+              filters:
+                - StripPrefix=2
+            - id: ticket-plural
+              uri: http://ticket-service:8088
+              predicates:
+                - Path=/api/tickets/**
+              filters:
+                - StripPrefix=2
+
+            - id: payment
+              uri: http://payment-service:8082
+              predicates:
+                - Path=/api/payment/**
+              filters:
+                - StripPrefix=2
+
+            - id: notification
+              uri: http://notification-service:8084
+              predicates:
+                - Path=/api/notification/**
+              filters:
+                - StripPrefix=2
+
+          default-filters:
+            - RemoveRequestHeader=Cookie

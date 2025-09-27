@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: cinema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+              value: file:/config/
+          volumeMounts:
+            - name: gateway-config
+              mountPath: /config
+      volumes:
+        - name: gateway-config
+          configMap:
+            name: gateway-config

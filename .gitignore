@@ -1,0 +1,18 @@
+﻿# IDE
+.idea/
+*.iml
+
+# Build dirs (bütün modullarda)
+**/target/
+**/out/
+
+# Logs
+*.log
+logs/
+
+# Node (əgər təsadüfən qovluqlar var)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

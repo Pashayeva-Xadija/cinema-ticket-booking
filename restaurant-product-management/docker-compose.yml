@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: restaurant-app
+    ports:
+      - "5050:5050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurant_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+
+    networks:
+      - restaurant-net
+
+  postgres:
+    image: postgres:13
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: restaurant_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d restaurant_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - restaurant-net
+
+networks:
+  restaurant-net:
+
+volumes:
+  postgres-data:

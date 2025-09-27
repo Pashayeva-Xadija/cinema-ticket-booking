@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: restaurant-app
+  template:
+    metadata:
+      labels:
+        app: restaurant-app
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ['sh','-c','until nc -z postgres-db 5432; do echo waiting for db; sleep 2; done']
+      containers:
+        - name: restaurant-app
+          image: restaurant-product-management-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5050
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-db:5432/productdb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: postgres
