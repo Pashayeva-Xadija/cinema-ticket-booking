@@ -1,4 +1,4 @@
-// api-gateway/src/main/java/com/example/apigateway/config/GatewayRoutesConfig.java
+
 package com.example.apigateway.config;
 
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -13,13 +13,13 @@ public class GatewayRoutesConfig {
     public RouteLocator routes(RouteLocatorBuilder b) {
         return b.routes()
 
+
                 .route("auth-docs", r -> r.path(
                                 "/api/auth/swagger-ui/**",
                                 "/api/auth/swagger-ui.html",
                                 "/api/auth/v3/api-docs/**",
                                 "/api/auth/v3/api-docs")
-                        .filters(f -> f.stripPrefix(2)
-                                .addRequestHeader("X-Forwarded-Prefix","/api/auth"))
+                        .filters(f -> f.stripPrefix(2))
                         .uri("https://energetic-celebration-production.up.railway.app"))
                 
                 .route("auth-api", r -> r.path("/api/auth/**")
