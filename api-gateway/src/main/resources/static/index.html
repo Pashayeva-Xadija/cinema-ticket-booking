@@ -1,48 +1,83 @@
 <!doctype html>
-<html>
-<head><meta charset="utf-8"><title>Cinema Demo</title></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cinema Demo</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 24px; background:#0b0f14; color:#e9eef5 }
+    .card { background:#121923; padding:16px; border-radius:10px; margin-bottom:16px }
+    .row { display:flex; gap:16px; flex-wrap:wrap }
+    .col { flex:1 1 320px }
+    input,select,button { padding:10px; border-radius:8px; border:1px solid #2a3a4a; background:#0f1620; color:#fff }
+    button { cursor:pointer; border:0; background:#1e88e5 }
+    button.secondary { background:#394b5a }
+    h2 { margin:0 0 12px 0 }
+    code { background:#0f1620; padding:4px 6px; border-radius:6px }
+    .log { white-space:pre-wrap; background:#0f1620; padding:12px; border-radius:8px; min-height:64px }
+  </style>
+</head>
 <body>
-<h2>Cinema Demo (Gateway)</h2>
 
-<h3>Auth (REAL)</h3>
-<div>
-  <input id="ruser" placeholder="username">
-  <input id="remail" placeholder="email">
-  <input id="rpass" placeholder="password" type="password">
-  <button onclick="reg()">Register</button>
+<h1>🎬 Cinema — Demo UI</h1>
+<p>API: <code id="apiBase"></code></p>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h2>Auth</h2>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <input id="email" placeholder="email" value="demo@user.com">
+        <input id="password" placeholder="password" type="password" value="demo1234">
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+        <button class="secondary" onclick="logout()">Logout</button>
+      </div>
+      <small>Token: <code id="tokenShort">-</code></small>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2>Showtimes</h2>
+      <div style="display:flex; gap:8px">
+        <button onclick="loadMovies()">List Movies</button>
+        <select id="movie"></select>
+        <button onclick="loadShowtimes()">Showtimes</button>
+        <select id="showtime"></select>
+      </div>
+    </div>
+  </div>
 </div>
-<div>
-  <input id="luser" placeholder="username">
-  <input id="lpass" placeholder="password" type="password">
-  <button onclick="login()">Login</button>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h2>Seats</h2>
+      <div style="display:flex; gap:8px">
+        <button onclick="loadSeats()">Load seats</button>
+        <input id="seat" placeholder="e.g. A5">
+        <button onclick="reserve()">Reserve</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card">
+      <h2>Booking</h2>
+      <div style="display:flex; gap:8px">
+        <button onclick="checkout()">Checkout</button>
+        <button onclick="pay()">Pay</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<h3>Booking (STUB)</h3>
-<button onclick="demo()">GET /api/booking/demo</button>
+<div class="card">
+  <h2>Log</h2>
+  <div id="log" class="log">-</div>
+</div>
 
-<p><a href="/swagger-ui/index.html" target="_blank">Swagger UI (aggregated)</a></p>
-
-<pre id="out"></pre>
-
-<script>
-  async function reg(){
-    const r = await fetch('/api/auth/auth/register',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username:ruser.value,email:remail.value,password:rpass.value})
-    });
-    document.getElementById('out').textContent = await r.text();
-  }
-  async function login(){
-    const r = await fetch('/api/auth/auth/login',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username:luser.value,password:lpass.value})
-    });
-    document.getElementById('out').textContent = await r.text();
-  }
-  async function demo(){
-    const r = await fetch('/api/booking/demo');
-    document.getElementById('out').textContent = JSON.stringify(await r.json(),null,2);
-  }
-</script>
+<script src="app.js"></script>
 </body>
 </html>

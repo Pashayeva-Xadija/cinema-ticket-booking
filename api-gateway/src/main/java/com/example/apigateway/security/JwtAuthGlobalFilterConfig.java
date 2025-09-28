@@ -27,7 +27,26 @@ public class JwtAuthGlobalFilterConfig {
             if (HttpMethod.OPTIONS.equals(method)) {
                 return chain.filter(exchange);
             }
-            if (isPublic(path)) {
+
+            if (path.startsWith("/actuator")
+                    || path.contains("/swagger-ui")
+                    || path.contains("/v3/api-docs")
+                    || path.startsWith("/api/auth/")
+                    || path.equals("/")
+                    || path.equals("/index.html")
+                    || path.startsWith("/app.js")
+                    || path.startsWith("/styles.css")) {
+                return chain.filter(exchange);
+            }
+
+
+            if (HttpMethod.GET.equals(method) && (
+                    path.startsWith("/api/showtime/")
+                            || path.startsWith("/api/inventory/")
+                            || path.startsWith("/api/booking/")
+                            || path.startsWith("/api/payment/")
+                            || path.startsWith("/api/ticket/")
+                            || path.startsWith("/api/notification/"))) {
                 return chain.filter(exchange);
             }
 
@@ -47,14 +66,6 @@ public class JwtAuthGlobalFilterConfig {
                 return unauthorized(exchange);
             }
         };
-    }
-
-    private boolean isPublic(String path) {
-
-        boolean swagger = path.contains("/swagger-ui") || path.contains("/v3/api-docs");
-        boolean actuator = path.startsWith("/actuator");
-        boolean auth = path.startsWith("/api/auth/");
-        return swagger || actuator || auth;
     }
 
     private Mono<Void> unauthorized(ServerWebExchange ex) {
