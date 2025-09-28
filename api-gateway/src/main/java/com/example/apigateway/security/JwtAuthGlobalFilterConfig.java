@@ -22,17 +22,16 @@ public class JwtAuthGlobalFilterConfig {
         return (exchange, chain) -> {
             String path = exchange.getRequest().getPath().value();
 
-            // 1) Swagger UI və v3 api-docs üçün JWT tələb etmə
+
             if (isSwagger(path)) {
                 return chain.filter(exchange);
             }
 
-            // 2) Auth servisin bütün endpointləri üçün JWT tələb etmə
+
             if (path.startsWith("/api/auth/")) {
                 return chain.filter(exchange);
             }
 
-            // 3) Qalan bütün çağırışlar üçün JWT yoxlaması
             String auth = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             if (auth == null || !auth.startsWith("Bearer ")) {
                 return unauthorized(exchange);
@@ -49,8 +48,6 @@ public class JwtAuthGlobalFilterConfig {
             }
         };
     }
-
-    // Swagger üçün prefiksə baxmadan burax (gateway arxasında da işləyir)
     private boolean isSwagger(String path) {
         return path.contains("/swagger-ui") || path.contains("/v3/api-docs");
     }

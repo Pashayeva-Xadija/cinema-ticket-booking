@@ -16,3 +16,13 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# Unrelated projects (ignore)
+queue_management_system/
+restaurant-product-management/
+sputnik_go/
+test/
+testt/
+event-service/
+order-service/
+gateway/
