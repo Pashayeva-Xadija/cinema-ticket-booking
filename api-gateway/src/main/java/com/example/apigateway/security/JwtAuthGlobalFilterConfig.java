@@ -23,7 +23,7 @@ public class JwtAuthGlobalFilterConfig {
         return (exchange, chain) -> {
             String path = exchange.getRequest().getPath().value();
             HttpMethod method = exchange.getRequest().getMethod();
-            
+
             if (HttpMethod.OPTIONS.equals(method)) {
                 return chain.filter(exchange);
             }
