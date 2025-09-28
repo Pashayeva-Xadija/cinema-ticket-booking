@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -21,16 +22,15 @@ public class JwtAuthGlobalFilterConfig {
 
         return (exchange, chain) -> {
             String path = exchange.getRequest().getPath().value();
-
-
-            if (isSwagger(path)) {
+            HttpMethod method = exchange.getRequest().getMethod();
+            
+            if (HttpMethod.OPTIONS.equals(method)) {
+                return chain.filter(exchange);
+            }
+            if (isPublic(path)) {
                 return chain.filter(exchange);
             }
 
-
-            if (path.startsWith("/api/auth/")) {
-                return chain.filter(exchange);
-            }
 
             String auth = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             if (auth == null || !auth.startsWith("Bearer ")) {
@@ -48,8 +48,13 @@ public class JwtAuthGlobalFilterConfig {
             }
         };
     }
-    private boolean isSwagger(String path) {
-        return path.contains("/swagger-ui") || path.contains("/v3/api-docs");
+
+    private boolean isPublic(String path) {
+
+        boolean swagger = path.contains("/swagger-ui") || path.contains("/v3/api-docs");
+        boolean actuator = path.startsWith("/actuator");
+        boolean auth = path.startsWith("/api/auth/");
+        return swagger || actuator || auth;
     }
 
     private Mono<Void> unauthorized(ServerWebExchange ex) {

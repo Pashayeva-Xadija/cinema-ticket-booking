@@ -18,6 +18,7 @@ public class SecurityConfig {
                         .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .pathMatchers("/api/*/swagger-ui.html", "/api/*/swagger-ui/**", "/api/*/v3/api-docs/**").permitAll()
                         .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers("/actuator/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .build();
