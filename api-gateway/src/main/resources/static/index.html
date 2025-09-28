@@ -1,83 +1,126 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Cinema Demo</title>
+  <meta charset="utf-8">
+  <title>Cinema Ticket Booking — Demo UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: system-ui, Arial; margin: 24px; background:#0b0f14; color:#e9eef5 }
-    .card { background:#121923; padding:16px; border-radius:10px; margin-bottom:16px }
-    .row { display:flex; gap:16px; flex-wrap:wrap }
-    .col { flex:1 1 320px }
-    input,select,button { padding:10px; border-radius:8px; border:1px solid #2a3a4a; background:#0f1620; color:#fff }
-    button { cursor:pointer; border:0; background:#1e88e5 }
-    button.secondary { background:#394b5a }
-    h2 { margin:0 0 12px 0 }
-    code { background:#0f1620; padding:4px 6px; border-radius:6px }
-    .log { white-space:pre-wrap; background:#0f1620; padding:12px; border-radius:8px; min-height:64px }
+    body { font-family: sans-serif; background:#0b1020; color:#eee; margin:0; }
+    header { background:#141b34; padding:16px; color:#5ad67d; font-size:20px; font-weight:600; }
+    .container { padding:20px; max-width:900px; margin:auto; }
+    .card { background:#1d2546; border:1px solid #333; border-radius:10px; padding:16px; margin-bottom:16px; }
+    button { background:#5ad67d; border:0; padding:8px 12px; border-radius:6px; cursor:pointer; }
+    input, select { padding:8px; border-radius:6px; border:1px solid #444; background:#10162b; color:#eee; }
   </style>
 </head>
 <body>
+<header>🎬 Cinema Ticket Booking — Demo</header>
+<div class="container">
 
-<h1>🎬 Cinema — Demo UI</h1>
-<p>API: <code id="apiBase"></code></p>
 
-<div class="row">
-  <div class="col">
-    <div class="card">
-      <h2>Auth</h2>
-      <div style="display:flex; gap:8px; flex-wrap:wrap">
-        <input id="email" placeholder="email" value="demo@user.com">
-        <input id="password" placeholder="password" type="password" value="demo1234">
-        <button onclick="register()">Register</button>
-        <button onclick="login()">Login</button>
-        <button class="secondary" onclick="logout()">Logout</button>
-      </div>
-      <small>Token: <code id="tokenShort">-</code></small>
-    </div>
+  <div class="card">
+    <h3>Auth</h3>
+    <input id="username" placeholder="username">
+    <input id="password" placeholder="password" type="password">
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+    <div id="authStatus">Not logged in</div>
   </div>
 
-  <div class="col">
-    <div class="card">
-      <h2>Showtimes</h2>
-      <div style="display:flex; gap:8px">
-        <button onclick="loadMovies()">List Movies</button>
-        <select id="movie"></select>
-        <button onclick="loadShowtimes()">Showtimes</button>
-        <select id="showtime"></select>
-      </div>
-    </div>
+
+  <div class="card">
+    <h3>Showtimes</h3>
+    <button onclick="loadShowtimes()">Load Showtimes</button>
+    <div id="showtimes"></div>
   </div>
+
+
+  <div class="card">
+    <h3>Booking</h3>
+    <input id="showtimeId" placeholder="Showtime ID">
+    <input id="seats" placeholder="Seats (e.g. A1,A2)">
+    <button onclick="book()">Book</button>
+    <div id="bookingResult"></div>
+  </div>
+
+
+  <div class="card">
+    <h3>Payment</h3>
+    <input id="amount" placeholder="Amount">
+    <select id="method">
+      <option value="CARD">Bank Card</option>
+      <option value="APPLE_PAY">Apple Pay</option>
+    </select>
+    <button onclick="pay()">Pay</button>
+    <div id="paymentResult"></div>
+  </div>
+
+ 
+  <div class="card">
+    <h3>Your Ticket</h3>
+    <input id="ticketId" placeholder="Ticket ID">
+    <button onclick="getTicket()">Get Ticket</button>
+    <div id="ticketResult"></div>
+  </div>
+
 </div>
 
-<div class="row">
-  <div class="col">
-    <div class="card">
-      <h2>Seats</h2>
-      <div style="display:flex; gap:8px">
-        <button onclick="loadSeats()">Load seats</button>
-        <input id="seat" placeholder="e.g. A5">
-        <button onclick="reserve()">Reserve</button>
-      </div>
-    </div>
-  </div>
+<script>
+  const BASE = window.location.origin;
+  let token = "";
 
-  <div class="col">
-    <div class="card">
-      <h2>Booking</h2>
-      <div style="display:flex; gap:8px">
-        <button onclick="checkout()">Checkout</button>
-        <button onclick="pay()">Pay</button>
-      </div>
-    </div>
-  </div>
-</div>
+  async function api(path, method="GET", body=null) {
+    const headers = { "Accept":"application/json" };
+    if (token) headers["Authorization"] = "Bearer "+token;
+    if (body) headers["Content-Type"]="application/json";
+    const r = await fetch(BASE+path, { method, headers, body: body?JSON.stringify(body):null });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  }
 
-<div class="card">
-  <h2>Log</h2>
-  <div id="log" class="log">-</div>
-</div>
+  async function register() {
+    const u=document.getElementById("username").value;
+    const p=document.getElementById("password").value;
+    try { await api("/api/auth/register","POST",{username:u,password:p,role:"USER"});
+      alert("Registered OK"); } catch(e){ alert("Register failed: "+e.message); }
+  }
 
-<script src="app.js"></script>
+  async function login() {
+    const u=document.getElementById("username").value;
+    const p=document.getElementById("password").value;
+    try { const res=await api("/api/auth/login","POST",{username:u,password:p});
+      token=res.accessToken||res.token; document.getElementById("authStatus").innerText="Logged in"; }
+    catch(e){ alert("Login failed: "+e.message); }
+  }
+
+  async function loadShowtimes() {
+    try { const res=await api("/api/showtime/list");
+      document.getElementById("showtimes").innerText=JSON.stringify(res); }
+    catch(e){ alert("Error: "+e.message); }
+  }
+
+  async function book() {
+    const showtimeId=document.getElementById("showtimeId").value;
+    const seats=document.getElementById("seats").value.split(",");
+    try { const res=await api("/api/booking/create","POST",{showtimeId,seats});
+      document.getElementById("bookingResult").innerText=JSON.stringify(res); }
+    catch(e){ alert("Booking failed: "+e.message); }
+  }
+
+  async function pay() {
+    const amount=document.getElementById("amount").value;
+    const method=document.getElementById("method").value;
+    try { const res=await api("/api/payment/pay","POST",{amount,method,currency:"USD"});
+      document.getElementById("paymentResult").innerText=JSON.stringify(res); }
+    catch(e){ alert("Payment failed: "+e.message); }
+  }
+
+  async function getTicket() {
+    const id=document.getElementById("ticketId").value;
+    try { const res=await api("/api/ticket/"+id);
+      document.getElementById("ticketResult").innerText=JSON.stringify(res); }
+    catch(e){ alert("Ticket error: "+e.message); }
+  }
+</script>
 </body>
 </html>
