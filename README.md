@@ -55,44 +55,18 @@ Deployment: Docker, Docker Compose, Kubernetes (Minikube)
 Documentation: Swagger / OpenAPI
 Tools: Maven, Git, GitHub, Lombok
 
-🏗 Architecture – Flow
-User
-  |
-  v
-+------------------+
-|   API Gateway    |
-+------------------+
-          |
-          v
-+------------------+          +------------------+
-|   Auth Service   |  -->     |  Login/Register  |
-+------------------+          |        + JWT     |
-          |                   +------------------+
-          v
-+------------------+          +-----------------------------+
-| Showtime Service |  -->     | Movies, halls & showtimes   |
-+------------------+          +-----------------------------+
-          |
-          v
-+------------------+
-| Booking Service  |  --> Reservation
-+------------------+
-          |
-          v
-+------------------+
-| Inventory Service|  --> Seat availability check
-+------------------+
-          |
-          v
-+------------------+
-| Payment Service  |  --> Payment processing
-+------------------+
-          |
-          v
-+------------------+                 +-----------------------+
-|  Ticket Service  |  --> Ticket     | Notification Service  |
-+------------------+      (QR)  -->  | Email/SMS (Kafka/RMQ) |
-                                     +-----------------------+
+
+## 🧭 Architecture – Flow (Text)
+
+1) **User → API Gateway** as the single entry point.  
+2) **Auth Service** → handles login/register and issues **JWT tokens**.  
+3) **Showtime Service** → manages movies, halls, and showtime data.  
+4) **Booking Service** → user makes a **seat reservation**.  
+5) **Inventory Service** → validates reservation by checking **seat availability**.  
+6) If successful → **Payment Service** is called to **process the payment**.  
+7) Once payment is **PAID** → **Ticket Service** generates the ticket (with a **QR code**).  
+8) At the same time, an **event** is published to **Notification Service** (**Kafka/RabbitMQ**).  
+9) **Notification Service** → sends **Email/SMS** to the user (including ticket + **QR code**).  
 
 
 🚀 Getting Started
