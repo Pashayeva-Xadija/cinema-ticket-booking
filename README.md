@@ -62,46 +62,38 @@ User
 +------------------+
 |   API Gateway    |
 +------------------+
-        |
-        v
+          |
+          v
++------------------+          +------------------+
+|   Auth Service   |  -->     |  Login/Register  |
++------------------+          |        + JWT     |
+          |                   +------------------+
+          v
++------------------+          +-----------------------------+
+| Showtime Service |  -->     | Movies, halls & showtimes   |
++------------------+          +-----------------------------+
+          |
+          v
 +------------------+
-|   Auth Service   |  --> Login/Register + JWT
+| Booking Service  |  --> Reservation
 +------------------+
-        |
-        v
-+---------------------+
-|  Showtime Service   |  --> Movies, halls & showtimes
-+---------------------+
-        |
-        v
-+---------------------+
-|  Booking Service    |  --> Reservation
-+---------------------+
-        |
-        v
-+---------------------+
-| Inventory Service   |  --> Seat availability check
-+---------------------+
-        |
-   [If successful]
-        |
-        v
-+---------------------+
-|  Payment Service    |  --> Payment processing
-+---------------------+
-        |
-   [If successful]
-        |
-        v
-+---------------------+
-|  Ticket Service     |  --> Ticket issued (with QR code)
-+---------------------+
-        |
-        v
-+---------------------+
-| Notification Serv.  |  --> Email / SMS sent
-|   (Kafka, RabbitMQ) |
-+---------------------+
+          |
+          v
++------------------+
+| Inventory Service|  --> Seat availability check
++------------------+
+          |
+          v
++------------------+
+| Payment Service  |  --> Payment processing
++------------------+
+          |
+          v
++------------------+                 +-----------------------+
+|  Ticket Service  |  --> Ticket     | Notification Service  |
++------------------+      (QR)  -->  | Email/SMS (Kafka/RMQ) |
+                                     +-----------------------+
+
 
 🚀 Getting Started
 Prerequisites
