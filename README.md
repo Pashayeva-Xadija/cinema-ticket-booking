@@ -109,7 +109,7 @@ USER → Browse shows, make reservations, buy tickets
 
 📬 Contact
 
-Made with ❤️ by Xədicə Paşayeva
+Made with  by Xədicə Paşayeva
 📧 xadijapashayeva@gmail.com
 
 🔗 LinkedIn: https://www.linkedin.com/in/xadija-pashayeva
