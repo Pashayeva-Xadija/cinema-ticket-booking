@@ -112,4 +112,5 @@ USER → Browse shows, make reservations, buy tickets
 Made with ❤️ by Xədicə Paşayeva
 📧 xadijapashayeva@gmail.com
 
-🔗 LinkedIn
+🔗 LinkedIn: https://www.linkedin.com/in/xadija-pashayeva
+
